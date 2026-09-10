@@ -3,10 +3,9 @@
 // letting the edge-runtime bundle tree-shake this (and its node:fs / db.ts
 // dependency) out instead of failing to bundle Node built-ins.
 export async function downloadDbFromBlob() {
-  if (!process.env.VERCEL) return; // local dev already has data/app.db on disk
-
   const fs = await import("node:fs");
-  const { TMP_DB_PATH } = await import("./lib/db");
+  const { IS_SERVERLESS, TMP_DB_PATH } = await import("./lib/db");
+  if (!IS_SERVERLESS) return; // local dev already has data/app.db on disk
 
   if (fs.existsSync(TMP_DB_PATH)) return; // already downloaded by this instance (warm reuse)
 

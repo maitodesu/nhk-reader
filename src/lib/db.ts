@@ -12,7 +12,13 @@ const LOCAL_DB_PATH = path.join(LOCAL_DATA_DIR, "app.db");
 // (see scripts/upload-db.ts) and `instrumentation.ts` downloads it to /tmp
 // before this server instance accepts any requests — see that file for why
 // this doesn't need to be awaited here too.
-export const IS_SERVERLESS = !!process.env.VERCEL;
+//
+// Also requires NODE_ENV === "production": `vercel env pull` writes VERCEL=1
+// into .env.local (which Next.js auto-loads even in `next dev`), so VERCEL
+// alone isn't a reliable signal once that file has ever been pulled locally.
+// `next dev` always sets NODE_ENV=development regardless of .env.local, so
+// this stays false there even with a polluted .env.local.
+export const IS_SERVERLESS = !!process.env.VERCEL && process.env.NODE_ENV === "production";
 export const TMP_DB_PATH = "/tmp/app.db";
 
 let _db: Database.Database | null = null;
