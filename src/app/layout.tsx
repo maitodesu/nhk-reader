@@ -26,7 +26,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Noto+Serif+JP:wght@400;500;700&family=Shippori+Mincho:wght@400;500;700&family=Zen+Old+Mincho:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap"
         />
       </head>
-      <body className="min-h-full flex flex-col">
+      {/* suppressHydrationWarning: some browser extensions (password managers, etc.) inject
+      attributes like cz-shortcut-listen onto <body> before React hydrates — a real mismatch,
+      but an expected/harmless one this tells React not to warn about (React's own documented
+      use case for this prop). */}
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <ThemeProvider>
           <FontProvider>
             <FuriganaProvider>
