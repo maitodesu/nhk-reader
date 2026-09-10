@@ -1,26 +1,196 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --washi: #f7f2e7;
+  --washi-deep: #efe6d3;
+  --sumi: #23201c;
+  --sumi-soft: #514a41;
+  --shu: #c1440e;
+  --shu-deep: #9c3208;
+  --shu-soft: #e0693f;
+  --gold: #b8963e;
+  --line: #ddd1b5;
+  --card: #fffdf8;
+
+  --background: var(--washi);
+  --foreground: var(--sumi);
 }
 
 @theme inline {
+  --color-washi: var(--washi);
+  --color-washi-deep: var(--washi-deep);
+  --color-sumi: var(--sumi);
+  --color-sumi-soft: var(--sumi-soft);
+  --color-shu: var(--shu);
+  --color-shu-deep: var(--shu-deep);
+  --color-shu-soft: var(--shu-soft);
+  --color-gold: var(--gold);
+  --color-line: var(--line);
+  --color-card: var(--card);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-serif-jp: "Noto Serif JP", serif;
+  /* Geist leads for latin glyphs (English UI chrome); browsers fall back to the JP
+     gothic per-glyph for anything Geist doesn't cover (kana/kanji), so this one stack
+     serves mixed English+Japanese text without extra markup. */
+  --font-sans-jp: "Geist", "Zen Kaku Gothic New", "Hiragino Sans", sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --washi: #17140f;
+    --washi-deep: #1e1a13;
+    --sumi: #ece4d3;
+    --sumi-soft: #b9ae99;
+    --shu: #e0693f;
+    --shu-deep: #c1440e;
+    --shu-soft: #e88a5f;
+    --gold: #d4b366;
+    --line: #3a3325;
+    --card: #211d15;
+    --background: var(--washi);
+    --foreground: var(--sumi);
   }
+}
+
+/* Explicit toggle (via ThemeProvider) wins over system preference either way. */
+:root[data-theme="dark"] {
+  --washi: #17140f;
+  --washi-deep: #1e1a13;
+  --sumi: #ece4d3;
+  --sumi-soft: #b9ae99;
+  --shu: #e0693f;
+  --shu-deep: #c1440e;
+  --shu-soft: #e88a5f;
+  --gold: #d4b366;
+  --line: #3a3325;
+  --card: #211d15;
+  --background: var(--washi);
+  --foreground: var(--sumi);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  background: var(--background);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans-jp), "Hiragino Sans", sans-serif;
+  background-image:
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--sumi) 4%, transparent) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+/* --- furigana display mode: always (default) / hover / off --- */
+html[data-furigana="off"] rt {
+  display: none;
+}
+html[data-furigana="hover"] rt {
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+html[data-furigana="hover"] ruby:hover rt {
+  opacity: 1;
+}
+ruby {
+  ruby-position: over;
+}
+rt {
+  font-size: 0.62em;
+  color: var(--shu-deep);
+  font-weight: 500;
+  user-select: none;
+}
+
+/* --- seigaiha (wave) accent, used sparingly as a decorative header band --- */
+.seigaiha {
+  background-image: radial-gradient(circle at 50% 100%, transparent 0 12px, var(--shu) 12.5px 13.5px, transparent 14px);
+  background-size: 28px 28px;
+  background-position: 0 0, 14px 14px;
+  opacity: 0.5;
+}
+
+/* --- reader body text --- */
+.reader-text {
+  font-family: var(--font-serif-jp), serif;
+  line-height: 2.4;
+  letter-spacing: 0.02em;
+}
+
+.lookup-token {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 1px;
+  transition: background-color 120ms ease;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in srgb, var(--sumi-soft) 55%, transparent);
+  text-underline-offset: 4px;
+}
+.lookup-token:hover,
+.lookup-token[data-active="true"] {
+  background-color: color-mix(in srgb, var(--jlpt-color, var(--shu)) 16%, transparent);
+  text-decoration-color: var(--jlpt-color, var(--shu));
+}
+
+/* --- JLPT difficulty underline (N5 easiest/green → N1 hardest/red), toggleable --- */
+html[data-jlpt-colors="on"] .lookup-token[data-jlpt="5"] { --jlpt-color: #4d9d3f; }
+html[data-jlpt-colors="on"] .lookup-token[data-jlpt="4"] { --jlpt-color: #8aab2e; }
+html[data-jlpt-colors="on"] .lookup-token[data-jlpt="3"] { --jlpt-color: #c99a1e; }
+html[data-jlpt-colors="on"] .lookup-token[data-jlpt="2"] { --jlpt-color: #d97424; }
+html[data-jlpt-colors="on"] .lookup-token[data-jlpt="1"] { --jlpt-color: #c9382e; }
+html[data-jlpt-colors="on"] .lookup-token[data-jlpt] {
+  text-decoration-style: solid;
+  text-decoration-color: color-mix(in srgb, var(--jlpt-color) 75%, transparent);
+  text-decoration-thickness: 2px;
+}
+
+.card-paper {
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--sumi) 6%, transparent), 0 8px 20px -12px color-mix(in srgb, var(--sumi) 25%, transparent);
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.popup-anim {
+  animation: pop-in 140ms ease-out;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--shu) 30%, transparent);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--sumi) 30%, transparent) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--sumi) 22%, transparent);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--shu) 45%, transparent);
+}
+
+/* --- dict popup's own scroll area: slimmer, so it doesn't compete with the content --- */
+.dict-popup-scroll {
+  scrollbar-width: thin;
+}
+.dict-popup-scroll::-webkit-scrollbar {
+  width: 6px;
 }

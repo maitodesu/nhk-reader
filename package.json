@@ -6,21 +6,30 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:dict": "node scripts/build-dictionary.mjs",
+    "scrape": "tsx scripts/scrape-articles.ts",
+    "backfill": "tsx scripts/backfill-articles.ts",
+    "upload:db": "tsx scripts/upload-db.ts",
+    "setup": "npm run build:dict && npm run scrape && npm run backfill"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
+    "better-sqlite3": "^13.0.3",
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }
