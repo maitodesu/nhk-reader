@@ -31,6 +31,28 @@ A Japanese-themed reader for NHK News Web Easy articles with:
 All of the above are downloaded and compiled into a local SQLite file (`data/app.db`); nothing
 is fetched at request time.
 
+## Deploying (Vercel)
+
+Vercel's deployment filesystem is read-only, and `data/app.db` (~250MB) is too big to commit to
+git. The fix: upload it once to **Vercel Blob**, then fetch it at **build time** (not request
+time) so it ships as a static, read-only file inside the deployed function — one download per
+deploy, not one per cold start.
+
+```bash
+npm run upload:db                              # uploads data/app.db to Vercel Blob
+vercel env add DB_BLOB_URL production          # paste the URL upload:db printed
+vercel env add DB_BLOB_URL preview
+```
+
+From there, `scripts/fetch-db.mjs` runs automatically as npm's `prebuild` step before every
+`next build` — it downloads the blob into `data/app.db` if it's not already present (a no-op
+locally, since it's already there), and `next.config.ts`'s `outputFileTracingIncludes` bundles
+that file into every server route's function output. `src/lib/db.ts` opens it read-only on
+Vercel (no WAL — the directory isn't writable there) and exactly as before locally.
+
+Re-run `npm run upload:db` any time `scrape`/`backfill`/`build:dict` produce fresh data, then
+redeploy (or just push — the next build's prebuild step fetches the latest blob automatically).
+
 ## Setup
 
 ```bash

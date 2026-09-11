@@ -2,24 +2,21 @@ import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
 
-// Local dev / build scripts: a real, writable file under ./data, exactly as before.
-const LOCAL_DATA_DIR = path.join(process.cwd(), "data");
-const LOCAL_DB_PATH = path.join(LOCAL_DATA_DIR, "app.db");
+const DATA_DIR = path.join(process.cwd(), "data");
+const DB_PATH = path.join(DATA_DIR, "app.db");
 
-// On Vercel the deployment filesystem is read-only (only /tmp is writable, and
-// it's wiped between cold starts), so there's nowhere to keep a local SQLite
-// file long-term. Instead the built database is uploaded once to Vercel Blob
-// (see scripts/upload-db.ts) and `instrumentation.ts` downloads it to /tmp
-// before this server instance accepts any requests — see that file for why
-// this doesn't need to be awaited here too.
+// On Vercel the deployment filesystem is read-only — but readable. data/app.db
+// is fetched once at BUILD time (scripts/fetch-db.mjs, wired as "prebuild")
+// and bundled as a static asset via next.config.ts's outputFileTracingIncludes,
+// so it's already sitting at this same relative path when the function runs;
+// no runtime network fetch needed. Just open it read-only there (WAL mode
+// needs to create -wal/-shm sidecar files, which a read-only directory won't
+// allow).
 //
 // Also requires NODE_ENV === "production": `vercel env pull` writes VERCEL=1
 // into .env.local (which Next.js auto-loads even in `next dev`), so VERCEL
 // alone isn't a reliable signal once that file has ever been pulled locally.
-// `next dev` always sets NODE_ENV=development regardless of .env.local, so
-// this stays false there even with a polluted .env.local.
-export const IS_SERVERLESS = !!process.env.VERCEL && process.env.NODE_ENV === "production";
-export const TMP_DB_PATH = "/tmp/app.db";
+const IS_SERVERLESS = !!process.env.VERCEL && process.env.NODE_ENV === "production";
 
 let _db: Database.Database | null = null;
 
@@ -28,16 +25,12 @@ export function getDb(): Database.Database {
   if (_db) return _db;
 
   if (IS_SERVERLESS) {
-    // instrumentation.ts already downloaded this before the server started
-    // accepting requests; open it read-only since /tmp on a reused (Fluid
-    // Compute) instance is still someone else's copy in spirit, and we never
-    // write from the deployed app anyway.
-    _db = new Database(TMP_DB_PATH, { readonly: true, fileMustExist: true });
+    _db = new Database(DB_PATH, { readonly: true, fileMustExist: true });
     return _db;
   }
 
-  if (!fs.existsSync(LOCAL_DATA_DIR)) fs.mkdirSync(LOCAL_DATA_DIR, { recursive: true });
-  const db = new Database(LOCAL_DB_PATH);
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  const db = new Database(DB_PATH);
   db.pragma("journal_mode = WAL");
   db.exec(SCHEMA);
   _db = db;
