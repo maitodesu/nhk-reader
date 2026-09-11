@@ -4,18 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/fetch-db.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "build:dict": "node scripts/build-dictionary.mjs",
     "scrape": "tsx scripts/scrape-articles.ts",
     "backfill": "tsx scripts/backfill-articles.ts",
-    "upload:db": "tsx scripts/upload-db.ts",
+    "upload:db": "gh release upload db-snapshot-1 data/app.db --clobber --repo maitodesu/nhk-reader",
     "setup": "npm run build:dict && npm run scrape && npm run backfill"
   },
   "dependencies": {
-    "@vercel/blob": "^2.8.0",
     "better-sqlite3": "^13.0.3",
     "next": "16.3.4",
     "react": "19.2.8",
